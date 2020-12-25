@@ -24,6 +24,12 @@ void readUART(void *data)
 {
     // Save the address of the structure to a pointer
     charData *messageData = (charData *) data;
+    
+    // counter that counts the number of characters used in the buffer but caps at 31
+    static int count = 0;
+
+    // Print initial ">> "
+    Serial.print(F(">> "));
 
     while(1)
     {   
@@ -36,22 +42,36 @@ void readUART(void *data)
             // lock mutex using RAII to release the lock once out of the if scope
             std::lock_guard<std::mutex> lock(messageData->UART_lock);
 
-            // change uart flag to true
-            messageData->serialUpdate = true;
-            
-            // Set a counter to 0
-            int count = 0;
+            Serial.print((char)Serial.peek());
 
-            // Fill the buffer until no more chars are available or if we are about to overflow
-            while(Serial.available() && (count < messageData->serialBufferSize))
+            if(Serial.peek() != '\r' && Serial.peek() != '\n') // Check for either carriage return or new line
             {
-                messageData->serialBuffer[count] = Serial.read();
-                count++;
+                if(count < messageData->serialBufferSize)
+                {
+                    messageData->serialBuffer[count] = Serial.read();
+                    count++;
+                }
+                else Serial.read();
             }
+            else
+            {
+                // Dump the '\r' and '\n'
+                Serial.read();
 
-            // Null-terminate and flush the UART
-            messageData->serialBuffer[count] = '\0';
-            Serial.flush();
+                // change uart flag to true
+                messageData->serialUpdate = true;
+
+                // Null-terminate and flush the UART
+                if(count < messageData->serialBufferSize) count++;
+
+                messageData->serialBuffer[count] = '\0';
+                Serial.flush();
+                count = 0;
+
+                // Print new line then another ">> "
+                Serial.println();
+                Serial.print(F(">> "));
+            }
         }
     }
 }

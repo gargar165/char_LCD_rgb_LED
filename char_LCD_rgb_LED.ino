@@ -12,6 +12,7 @@
 
 // System libraries
 #include <TeensyThreads.h>
+#include <NativeEthernet.h>
 
 // User defines
 #define DEBUG
@@ -27,23 +28,25 @@
 // Objects for LED and character LCD/UART
 charData messageData;
 ledData  ledStatus;
+uint8_t  myMAC[6];
 
-// Debug that reads from UART buffer in messageData every half second
-#ifdef DEBUG
-#include <elapsedMillis.h>
-elapsedMillis counter;
-
-void debugPrint()
+// Pulled from vjmuzik's post
+// https://forum.pjrc.com/threads/62932-Teensy-4-1-MAC-Address
+void teensyMAC(uint8_t *mac)
 {
-    if(messageData.serialUpdate && (counter > 500))
-    {
-        Serial.print(F(">> "));
-        Serial.println(messageData.serialBuffer);
+    for(uint8_t i = 0; i < 2; i++) mac[i] = (HW_OCOTP_MAC1 >> ((1 - i) * 8)) & 0xFF;
+    for(uint8_t i = 0; i < 4; i++) mac[i + 2] = (HW_OCOTP_MAC0 >> ((3 - i) * 8)) & 0xFF;
 
-        counter = 0;
+#ifdef DEBUG
+    Serial.print(F("MAC Address: "));
+    for(uint8_t i = 0; i < 6; i++)
+    {
+        Serial.print(mac[i], HEX);
+        Serial.print(F(" "));
     }
-}
+    Serial.println();
 #endif
+}
 
 // Sets up I/O, prints message, then attaches main threads
 void setup()
@@ -61,12 +64,14 @@ void setup()
     threads.addThread(printLCD, &messageData);
     threads.addThread(joystickListener, &ledStatus);
     threads.addThread(updateLED, &ledStatus);
+
+    teensyMAC(myMAC);
 }
 
 // Do nothing unless if DEBUG is defined
 void loop()
 {
 #ifdef DEBUG
-    debugPrint();
+    // What should I have here if I were to have debug statements..?
 #endif
 }

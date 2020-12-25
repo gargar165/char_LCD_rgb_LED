@@ -1,6 +1,6 @@
 <h1>char_LCD_rgb_LED<h2>A TeensyThread example on how to use mutexes and RAII to handle threading on the Teensy 4.1.</h2></h1>
 
-<p><b>Requires a Teensy 4.1 and the Arduino serial monitor for this iteration.</b> Using TeensyThreads, the programmer is able to run up to 8 threads at a time. This sketch creates four threads that read or write to I/O while also modifying memory.
+<p><b>Requires a Teensy 4.1 and a dummy terminal like Arduino's serial monitor or PuTTY.</b> Using TeensyThreads, the programmer is able to run up to 8 threads at a time. This sketch creates four threads that read or write to I/O while also modifying memory.
 
 This program does two separate functions that require two threads each. 
 
@@ -12,6 +12,8 @@ One of the things I wanted to learn during this was how to use RAII techniques o
 
 I also wanted to look at how to pass structure objects through threads. I just passed the bytes into the function ran by the child thread as raw bytes of memory, then told the compiler how to structure that memory when having instructions done on said memory.
 
+Fun little thing I'm going to experiment with next is using NativeEthernet to control the LED with a Python script I'll have to include!
+
 <b>Next Updates:</b>
-- Work in PuTTY
 - Use up and down on joystick to determine how bright a color should be on the palette
+- Use NativeEthernet to control the LED. The host machine will use a Python script to relay the value to the Teensy.

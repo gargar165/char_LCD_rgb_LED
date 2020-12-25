@@ -38,15 +38,7 @@ void updateLED(void *data)
         analogWrite(led.red, ledStatus->red);
         analogWrite(led.green, ledStatus->green);
         analogWrite(led.blue, ledStatus->blue);
-        
-        Serial.print(ledStatus->red, HEX);
-        Serial.print(" ");
-        Serial.print(ledStatus->green, HEX);
-        Serial.print(" ");
-        Serial.println(ledStatus->blue, HEX);
     }
-    
-    
 }
 
 #endif
