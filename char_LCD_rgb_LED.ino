@@ -12,41 +12,28 @@
 
 // System libraries
 #include <TeensyThreads.h>
-#include <NativeEthernet.h>
+#include <SdFat.h>
 
 // User defines
 #define DEBUG
 
-// User headers
-#include "charData.h"
-#include "ledData.h"
-#include "joystickCode.h"
-#include "ledCode.h"
-#include "lcdCode.h"
-#include "serialCode.h"
+// Data structures for the threads to use
+#include "data\charData.h"
+#include "data\ledData.h"
+#include "data\networkData.h"
+#include "data\storageData.h"
+
+// Functions that are used by threads
+#include "threaded_functions\joystickCode.h"
+#include "threaded_functions\ledCode.h"
+#include "threaded_functions\lcdCode.h"
+#include "threaded_functions\serialCode.h"
 
 // Objects for LED and character LCD/UART
-charData messageData;
-ledData  ledStatus;
-uint8_t  myMAC[6];
-
-// Pulled from vjmuzik's post
-// https://forum.pjrc.com/threads/62932-Teensy-4-1-MAC-Address
-void teensyMAC(uint8_t *mac)
-{
-    for(uint8_t i = 0; i < 2; i++) mac[i] = (HW_OCOTP_MAC1 >> ((1 - i) * 8)) & 0xFF;
-    for(uint8_t i = 0; i < 4; i++) mac[i + 2] = (HW_OCOTP_MAC0 >> ((3 - i) * 8)) & 0xFF;
-
-#ifdef DEBUG
-    Serial.print(F("MAC Address: "));
-    for(uint8_t i = 0; i < 6; i++)
-    {
-        Serial.print(mac[i], HEX);
-        Serial.print(F(" "));
-    }
-    Serial.println();
-#endif
-}
+charData    messageData;
+ledData     ledStatus;
+networkData localnetwork;
+Storage_t   sd_card;
 
 // Sets up I/O, prints message, then attaches main threads
 void setup()
@@ -55,17 +42,16 @@ void setup()
     setupLCD();
     setupLED();
     setupUART();
+    setupStorage(&sd_card);
     readyLCD(); // Then have all the once the threads are done, free the int and run this
+    testStorage(&sd_card);
 
-    Serial.println(F("System on, listening to UART!"));
-    Serial.println(F("WARNING: WILL ONLY WORK IN ARDUINO SERIAL CONSOLE"));
+    Serial.println(F("System --- System on, listening to UART!"));
 
     threads.addThread(readUART, &messageData);
     threads.addThread(printLCD, &messageData);
     threads.addThread(joystickListener, &ledStatus);
     threads.addThread(updateLED, &ledStatus);
-
-    teensyMAC(myMAC);
 }
 
 // Do nothing unless if DEBUG is defined
